@@ -67,6 +67,7 @@ const fetchChats = asyncHandler(async (req, res) => {
   }
 })
 
+// To create group chat
 const createGroupChat = asyncHandler(async (req, res) => {
 
   // if any of the fields are empty
@@ -79,7 +80,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
 
   // if less than 2 users
   if (users.length < 2) {
-    return res.status(400).send("More than 2 users are required for a group chat");
+    return res.status(400).send("Add atleast 2 users");
   }
 
   // also add the user who created the group
@@ -107,6 +108,7 @@ const createGroupChat = asyncHandler(async (req, res) => {
 
 })
 
+// To rename group
 const renameGroup = asyncHandler(async (req, res) => {
   try {
     const { chatId, chatName } = req.body;
@@ -122,6 +124,7 @@ const renameGroup = asyncHandler(async (req, res) => {
   }
 })
 
+// To add an user to group
 const addToGroup = asyncHandler(async (req, res) => {
   try {
     const { chatId, userId } = req.body;
@@ -138,6 +141,8 @@ const addToGroup = asyncHandler(async (req, res) => {
   }
   
 })
+
+// To remove an user from group
 const removeFromGroup = asyncHandler(async (req, res) => {
   try {
     const { chatId, userId } = req.body;

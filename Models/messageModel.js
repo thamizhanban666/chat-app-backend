@@ -6,6 +6,6 @@ const messageModel = mongoose.Schema({
   chat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" },
 }, { timestamps: true });
 
-const message = mongoose.model("Message", messageModel);
+const Message = mongoose.model("Message", messageModel);
 
-module.exports = message;
+module.exports = Message;

@@ -38,7 +38,7 @@ const registerUser = asyncHandler(async (req, res) => {
 // Login authorization
 const authUser = asyncHandler(async (req, res) => {
 
-  const { name, email, password, pic } = req.body;
+  const { email, password } = req.body;
   // check whether the email is already exists
   const user = await User.findOne({ email });
   if (user) {
@@ -63,8 +63,8 @@ const allUsers = asyncHandler(async (req, res) => {
     ]
   } : {};
 
-  const users = await (await User.find(keyword))
-    // .find({ _id: { $ne: req.user._id } });
+  const users = await User.find(keyword)
+    .find({ _id: { $ne: req.user._id } });
   res.status(201).send(users);
 
 })
