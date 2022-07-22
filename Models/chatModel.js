@@ -15,6 +15,15 @@ const chatModel = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   },
+  notification: [{
+    message:  {
+      type: Object
+    },
+    users: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }]
+  }]
 
 }, { timestamps: true });
 

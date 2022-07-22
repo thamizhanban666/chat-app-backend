@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
+const Chat = require("./Models/chatModel");
+const Message = require("./Models/messageModel");
 
 const PORT = process.env.PORT || 5000;
 
@@ -32,24 +34,38 @@ app.use('/api/message', messageRoutes);
 // listen
 const server = app.listen(PORT, () => { console.log(`server is running at port-${PORT}`) });
 
+
 // socket.io
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
   cors: {origin:"*"}
 });
 
+var onlineUsers = [];
+
 io.on("connection", (socket) => {
-  console.log("Connected to socket.io");
+  // console.log("Connected to socket.io");
 
   socket.on("setup", (userData) => {
+    // console.log(userData._id);
     socket.join(userData._id);
-    console.log(userData._id);
-    socket.emit("connected");
+    socket.emit("connected", userData._id);
+
+    if (!onlineUsers.includes(userData._id)) {
+      onlineUsers.push(userData._id)
+      io.sockets.emit("online users", onlineUsers);
+    }
   })
 
-  socket.on("join chat", (room) => {
-    socket.join(room);
-    console.log(`User joined Room : ${room}`);
+  socket.on("join chat", (userId, chat) => {  
+    socket.join(chat._id);
+    chat?.users?.forEach((user) => {
+      if (user._id == userId) return;
+
+      socket.in(user._id).emit("other seen", chat?._id);
+      
+    })
+    // console.log(`User joined Room : ${room}`);
   })
 
   socket.on("typing", (room) => socket.to(room).emit("typing"));
@@ -65,10 +81,47 @@ io.on("connection", (socket) => {
       
     })
   })
+  
+  socket.on("seen", async (userId, chat) => {
+    chat?.users?.forEach((user) => {
+      if (user._id == userId) return;
+
+      socket.in(user._id).emit("other seen", chat?._id);
+      
+    })
+
+    try {
+
+      await Chat.findByIdAndUpdate(
+        chat?._id,
+        {
+          $pull: {"notification.$[].users": userId}
+        },
+      )
+      
+      await Message.updateOne(
+        { chat: chat._id, seen: false },
+        { $set: { seen: true } }
+      )
+     
+    } catch (error) {
+      console.log(error);
+    }
+  })
+
 
   socket.off("setup", () => {
     console.log("User disconnected");
-    socket.leave(userData._id)
+    socket.leave(userData._id);
+  })
+
+  socket.on("disconnecting", (reason) => {
+    for (const room of socket.rooms) {
+      if (room !== socket.id && onlineUsers.includes(room)) {
+        onlineUsers.splice(onlineUsers.indexOf(room), 1);
+        io.sockets.emit("online users", onlineUsers);
+      }
+    }
   })
 
 })
